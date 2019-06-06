@@ -33,10 +33,11 @@ class PBFormatSpec extends WordSpec with Matchers {
   "PBFormat" should {
     "derived new instances using imap" in {
       case class Message(instant: Instant)
+
       val instant = Instant.ofEpochMilli(1499411227777L)
       val bytes   = Message(instant).toPB
       bytes shouldBe Array[Byte](8, -127, -55, -2, -34, -47, 43)
-      bytes.pbTo[Message] shouldBe Message(instant)
+      bytes.pbTo[Message] should contain(Message(instant))
     }
     "derived optional instances using imap" in {
       import cats.instances.option._
@@ -44,7 +45,7 @@ class PBFormatSpec extends WordSpec with Matchers {
       val instant = Instant.ofEpochMilli(1499411227777L)
       val bytes   = Message(Some(instant)).toPB
       bytes shouldBe Array[Byte](8, -127, -55, -2, -34, -47, 43)
-      bytes.pbTo[Message] shouldBe Message(Some(instant))
+      bytes.pbTo[Message] should contain(Message(Some(instant)))
     }
   }
 

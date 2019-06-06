@@ -32,7 +32,7 @@ class PBWriterSpec extends WordSpecLike with Matchers {
       val message = BooleanMessage(Some(true))
       message.toPB shouldBe Array[Byte](8, 1)
     }
-    "write an Int to Protobuf" in {
+    "write an Int \to Protobuf" in {
       case class IntMessage(value: Option[Int])
       val message = IntMessage(Some(5))
       message.toPB shouldBe Array[Byte](8, 5)

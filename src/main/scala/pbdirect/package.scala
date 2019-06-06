@@ -38,7 +38,7 @@ package object pbdirect {
     }
   }
   implicit class PBParserOps(private val bytes: Array[Byte]) extends AnyVal {
-    def pbTo[A](implicit reader: PBParser[A]): A = {
+    def pbTo[A](implicit reader: PBParser[A]): Option[A] = {
       // wraps the bytes into a protobuf single field message
       val out   = new ByteArrayOutputStream()
       val pbOut = CodedOutputStream.newInstance(out)
