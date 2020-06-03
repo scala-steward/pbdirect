@@ -16,7 +16,7 @@ PBDirect aims just that: Make it easier to serialize/deserialize into Protobuf.
 In order to use PBDirect you need to add the following lines to your `build.sbt`:
 
 ```scala
-libraryDependencies += "com.47deg" %% "pbdirect" % "0.5.2"
+libraryDependencies += "com.47deg" %% "pbdirect" % "@VERSION@"
 ```
 
 ## Dependencies
@@ -30,7 +30,7 @@ PBDirect depends on:
 
 In order to use PBDirect you need to import the following:
 
-```scala
+```scala mdoc
 import pbdirect._
 ```
 
@@ -40,7 +40,7 @@ import pbdirect._
 
 PBDirect serialises case classes into protobuf and there is no need for a .proto schema definition file.
 
-```scala
+```scala mdoc
 case class MyMessage(
   @pbIndex(1) id: Option[Int],
   @pbIndex(3) text: Option[String],
@@ -61,7 +61,7 @@ message MyMessage2 {
 Note that the `@pbIndex` annotation is optional. If it is not present, the field's position in the case class is used
 as its index. For example, an unannotated case class like:
 
-```scala
+```scala mdoc
 case class MyMessage2(
   id: Option[Int],
   text: Option[String],
@@ -83,31 +83,14 @@ message MyMessage {
 
 You only need to call the `toPB` method on your case class. This method is implicitly added with `import pbdirect._`.
 
-```scala
+```scala mdoc
 val message = MyMessage2(
   id = Some(123),
   text = Some("Hello"),
   numbers = List(1, 2, 3, 4)
 )
-// message: MyMessage2 = MyMessage2(Some(123), Some("Hello"), List(1, 2, 3, 4))
 val bytes = message.toPB
-// bytes: Array[Byte] = Array(
-//   8,
-//   123,
-//   18,
-//   5,
-//   72,
-//   101,
-//   108,
-//   108,
-//   111,
-//   26,
-//   4,
-//   1,
-//   2,
-//   3,
-//   4
-// )
+// bytes: Array(8, 123, 26, 5, 72, 101, 108, 108, 111, 40, 1, 40, 2, 40, 3, 40, 4)
 ```
 
 ### Deserialization
@@ -115,33 +98,10 @@ val bytes = message.toPB
 Deserializing bytes into a case class is also straight forward. You only need to call the `pbTo[A]` method on the byte array containing the protobuf encoded data.
 This method is added implicitly on all `Array[Byte]` by importing `pbdirect._`.
 
-```scala
+```scala mdoc
 val bytes2: Array[Byte] = Array[Byte](8, 123, 26, 5, 72, 101, 108, 108, 111, 40, 1, 40, 2, 40, 3, 40, 4)
-// bytes2: Array[Byte] = Array(
-//   8,
-//   123,
-//   26,
-//   5,
-//   72,
-//   101,
-//   108,
-//   108,
-//   111,
-//   40,
-//   1,
-//   40,
-//   2,
-//   40,
-//   3,
-//   40,
-//   4
-// )
 val message2 = bytes2.pbTo[MyMessage2]
-// message2: MyMessage2 = MyMessage2(
-//   Some(123),
-//   None,
-//   List(72, 101, 108, 108, 111)
-// )
+// message: MyMessage2(Some(123),Some(hello),List(1, 2, 3, 4))
 ```
 
 ## Extension
@@ -149,33 +109,30 @@ val message2 = bytes2.pbTo[MyMessage2]
 You might want to define your own formats for unsupported types.
 E.g. to add a format to write `java.time.Instant` you can do:
 
-```scala
+```scala mdoc
 import java.time.Instant
 import cats.implicits._
 
 implicit val instantFormat: PBFormat[Instant] =
   PBFormat[Long].imap(Instant.ofEpochMilli(_))(_.toEpochMilli)
-// instantFormat: PBFormat[Instant] = pbdirect.PBFormat$$anon$1@5a70a3ee
 ```
 
 If you only need a reader you can map over an existing `PBScalarValueReader`
 
-```scala
+```scala mdoc
 import java.time.Instant
 
 implicit val instantReader: PBScalarValueReader[Instant] =
   PBScalarValueReader[Long].map(Instant.ofEpochMilli(_))
-// instantReader: PBScalarValueReader[Instant] = pbdirect.PBScalarValueReaderImplicits$FunctorReader$$anon$2@1c3e13e6
 ```
 
 And for a writer you simply contramap over it:
 
-```scala
+```scala mdoc
 import java.time.Instant
 
 implicit val instantWriter: PBScalarValueWriter[Instant] =
   PBScalarValueWriter[Long].contramap(_.toEpochMilli)
-// instantWriter: PBScalarValueWriter[Instant] = pbdirect.PBScalarValueWriterImplicits$ContravariantWriter$$anon$2@242baf78
 ```
 
 ## Oneof fields
@@ -184,7 +141,7 @@ pbdirect supports protobuf [`oneof` fields](https://developers.google.com/protoc
 
 For example:
 
-```scala
+```scala mdoc
 import shapeless._
 
 case class MyMessage3(
@@ -208,7 +165,7 @@ message MyMessage3 {
 
 `oneof` fields with exactly two branches can also be encoded using `Either`. For example:
 
-```scala
+```scala mdoc
 case class MyMessage4(
   @pbIndex(1) number: Int,
   @pbIndex(2,3) either: Option[Either[String, Boolean]]
@@ -258,7 +215,7 @@ of the underlying type.
 
 For example, if your message looks like:
 
-```scala
+```scala mdoc
 case class MyMessage5(instant: Instant)
 ```
 
@@ -271,7 +228,7 @@ encoded using the protobuf packed encoding by default.
 
 This behaviour can be overriden using the `@pbUnpacked` annotation:
 
-```scala
+```scala mdoc
 case class UnpackedMessage(
   @pbUnpacked() ints: List[Int]
 )
@@ -282,7 +239,7 @@ case class UnpackedMessage(
 You can tell pbdirect that an Int/Long field should be encoded in a special way
 by tagging its type with `Signed`, `Unsigned` or `Fixed`. For example:
 
-```scala
+```scala mdoc
 import shapeless.tag.@@
 import pbdirect.{Signed, Unsigned, Fixed}
 
@@ -321,7 +278,7 @@ message IntsMessage {
 You can also tag individual types inside coproducts, key and value types of maps
 and element types of lists:
 
-```scala
+```scala mdoc
 case class AnotherIntsMessage(
   @pbIndex(1, 2) signedIntOrNormalInt  : (Int @@ Signed) :+: Int :+: CNil,
   @pbIndex(3)    signedIntFixedLongMap : Map[Int @@ Signed, Long @@ Fixed],
